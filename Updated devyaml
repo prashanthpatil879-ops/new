@@ -1,0 +1,53 @@
+# =====================================================================
+# File ingestion configuration
+# =====================================================================
+ingest_files:
+
+  # -------------------------------------------------------------------
+  dv01_all_asset_derivative:
+    landing: adls.landing/{adls.landing}/adls.landing/{env_table_prefix}RiskAnalyst/EAR/DV01
+    archive: adls.archive/YYYYMMDD/{adls.archive}/YYYYMMDD/adls.archive/YYYYMMDD/{env_table_prefix}RiskAnalyst/EAR/DV01
+    file_pattern: DV01_Derivatives_ALL_Asset_Derivative_*.xlsx
+    file_format: excel
+
+    sheets:
+      sheet1:
+        options:
+          sheet_name: "Sheet1"
+          header: 0
+
+        # -----------------------------------------------------------------
+        # Full schema - column names & data types exactly as extracted from
+        # the SQL view (INFORMATION_SCHEMA.COLUMNS). These override the
+        # dtypes inferred by pandas during pd.read_excel.
+        # Mapping applied in file_ingestor.apply_schema():
+        #   nvarchar/varchar/char/text -> string
+        #   date                       -> date      (Spark DateType)
+        #   datetime/timestamp         -> timestamp (Spark TimestampType)
+        #   decimal/numeric            -> double    (float64)
+        #   int/bigint/smallint        -> integer   (nullable Int64)
+        #   bit                        -> boolean
+        # -----------------------------------------------------------------
+        schema: {REPORT_DATE: date, TAM_COUNTRY: nvarchar, TAM_MARKET: nvarchar,
+                 TAM_SEGMENT: nvarchar, SEGMENT_TYPE: nvarchar, LEGAL_ID: nvarchar,
+                 SUBFUND: nvarchar, PORTFOLIO_CODE: nvarchar, ASSET_PRIMARYID: nvarchar,
+                 IS_DERIVATIVES: bit, SIDE_TYPE: nvarchar, NOTIONAL_LOCAL_CURRENCY: decimal,
+                 IR_SCENARIO_NAME: nvarchar, RISK_MEASURE_NAME: nvarchar, RISK_FACTOR_NAME: nvarchar,
+                 DELTA_LOCAL_CURRENCY: decimal, DELTA_CAD: decimal, ALM_ASSET_CATEGORY: nvarchar,
+                 ALM_ASSET_CLASS: nvarchar, ALM_ASSET_TYPE: nvarchar, IS_PRIVATE: bit,
+                 TAM_MARKET_SECTOR: nvarchar, ISSUER_NAME: nvarchar, COUPON_RATE: decimal,
+                 MATURITY_DATE: date, RATING: nvarchar, ISSUE_CURRENCY: nvarchar,
+                 TO_CAD_FX_RATE: decimal, PORTFOLIO_ID: int, ASSET_ID: int,
+                 GRID_POINT_ID: int, IR_SCENARIO_ID: int, RBL_NOTIONAL: decimal,
+                 RBL_FX_FLT: nvarchar, RBL_INTERNAL_LENTITY: nvarchar, RBL_BUSINESS_CASE: nvarchar,
+                 MATURITY_DATE_FOR_VALUATION: date, RINGFENCE_EFFECTIVE_DATE: date,
+                 RINGFENCE_EXPIRY_DATE: date, HEDGE_PROGRAM: nvarchar}
+
+    raw_table: schema.raw.{schema.raw}.schema.raw.{env_table_prefix}${ear_table_prefix}_dv01_all_asset_derivative_raw
+    raw_ext_table_loc: adls.raw/{adls.raw}/adls.raw/{env_table_prefix}${ear_table_prefix}_dv01_all_asset_derivative_raw
+
+  # -------------------------------------------------------------------
+  # Other tables (File / DeltaShare / Web ingestion) remain unchanged.
+  # They may keep using 'column_type_overrides' if no 'schema' is given;
+  # only tables that define 'schema' get the new behaviour.
+  # -------------------------------------------------------------------
